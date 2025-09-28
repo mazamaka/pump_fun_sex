@@ -8,3 +8,4 @@ websockets
 starlette-admin
 loguru
 uvicorn
+rugcheck

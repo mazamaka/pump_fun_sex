@@ -2,6 +2,7 @@ import asyncio
 import websockets
 import json
 
+
 async def run():
     uri = "wss://pumpportal.fun/api/data"
     async with websockets.connect(uri) as ws:
@@ -13,5 +14,11 @@ async def run():
             print("New event:", data)
 
 
+
+from rugcheck import rugcheck
+
 if __name__ == '__main__':
-    asyncio.run(run())
+    token = '6YLjbpxyXRumYC13gTfdLjXKMg2H6QmmyakHBJyDpump'
+    rc = rugcheck(token)
+    print(f'rc: {rc.to_json()}')
+    # asyncio.run(run())
