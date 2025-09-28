@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+sqlmodel
+SQLAlchemy
+psycopg2-binary
+pydantic-settings
+websockets
+starlette-admin
+loguru
+uvicorn

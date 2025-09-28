@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PumpFun Dashboard</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;margin:0;padding:24px;background:#0b1220;color:#e5e7eb}
+    h1{margin:0 0 16px 0;font-size:20px}
+    .status{margin-bottom:12px;font-size:12px;opacity:.8}
+    table{width:100%;border-collapse:collapse;background:#0f172a;border-radius:8px;overflow:hidden}
+    thead{background:#111827}
+    th,td{padding:10px 12px;border-bottom:1px solid #1f2937;font-size:12px;text-align:left;vertical-align:top}
+    tr:hover{background:#0e1a33}
+    code{color:#93c5fd}
+    .pill{display:inline-block;padding:2px 6px;border-radius:12px;background:#1e293b;color:#93c5fd;font-size:11px}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+    .card{background:#0f172a;padding:12px;border-radius:8px}
+  </style>
+</head>
+<body>
+  <h1>PumpFun Dashboard</h1>
+  <div class="grid">
+    <div class="card"><div class="status">WebSocket: <span id="ws-status">connecting</span></div></div>
+    <div class="card"><div class="status">Всего событий: <span id="total">0</span></div></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Symbol</th>
+        <th>Name</th>
+        <th>Signature</th>
+        <th>Mint</th>
+        <th>MarketCap(SOL)</th>
+        <th>Sol Amount</th>
+        <th>Initial Buy</th>
+        <th>Pool</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <script>
+    const statusEl = document.getElementById('ws-status');
+    const totalEl = document.getElementById('total');
+    const rowsEl = document.getElementById('rows');
+
+    let total = 0;
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    const wsUrl = `${proto}://${location.host}/ws/tokens`;
+
+    function addRow(evt){
+      total += 1; totalEl.textContent = String(total);
+      const tr = document.createElement('tr');
+      const t = new Date().toLocaleTimeString();
+      tr.innerHTML = `
+        <td>${t}</td>
+        <td><span class="pill">${evt.symbol ?? ''}</span></td>
+        <td>${evt.name ?? ''}</td>
+        <td><code>${evt.signature ?? ''}</code></td>
+        <td><code>${evt.mint ?? ''}</code></td>
+        <td>${evt.marketCapSol ?? ''}</td>
+        <td>${evt.solAmount ?? ''}</td>
+        <td>${evt.initialBuy ?? ''}</td>
+        <td>${evt.pool ?? ''}</td>
+      `;
+      rowsEl.prepend(tr);
+      const limit = 200; while(rowsEl.children.length > limit){ rowsEl.removeChild(rowsEl.lastChild); }
+    }
+
+    function connect(){
+      statusEl.textContent = 'connecting';
+      const ws = new WebSocket(wsUrl);
+      ws.onopen = () => statusEl.textContent = 'connected';
+      ws.onmessage = (ev) => {
+        try { const data = JSON.parse(ev.data); if(data && data.type === 'new_token'){ addRow(data); } }
+        catch(e){ /* ignore */ }
+      };
+      ws.onclose = () => { statusEl.textContent = 'reconnecting'; setTimeout(connect, 1000); };
+      ws.onerror = () => { try { ws.close(); } catch(e){} };
+      setInterval(() => { try { ws.send('ping'); } catch(e){} }, 20000);
+    }
+
+    connect();
+  </script>
+</body>
+</html>
